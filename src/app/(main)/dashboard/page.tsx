@@ -1,8 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { createSupabaseServerClient } from "@/lib/supabase/server"
+import { redirect } from "next/navigation";
 
-export default function DashboardPage() {
-  // Mock Data
+export default async function DashboardPage() {
+
+  const supabase = await createSupabaseServerClient()
+
+  const {
+    data: { user }
+  } = await supabase.auth.getUser()
+
+  if (!user) redirect("/login")
+
   const journals = [
     { id: 1, date: "Hari Ini, 10:30", mood: "😁", title: "Hari yang produktif!", preview: "Akhirnya selesai mengerjakan proyek besar...", tags: ["Kerja"] },
     { id: 2, date: "Kemarin", mood: "😟", title: "Agak lelah", preview: "Seharian cuma di kasur karena flu berat...", tags: ["Kesehatan"] },
@@ -27,7 +37,7 @@ export default function DashboardPage() {
               <p className="text-sm text-slate-600 line-clamp-2">{j.preview}</p>
               <div className="mt-3 flex gap-2">
                 {j.tags.map(tag => (
-                   <Badge key={tag} variant="secondary" className="text-xs font-normal">{tag}</Badge>
+                  <Badge key={tag} variant="secondary" className="text-xs font-normal">{tag}</Badge>
                 ))}
               </div>
             </CardContent>
