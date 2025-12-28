@@ -3,51 +3,61 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
+import { loginSchema, registerSchema } from "@/lib/schemas";
 
-export async function login(formData: FormData) {
+type LoginInput = z.infer<typeof loginSchema>;
+type RegisterInput = z.infer<typeof registerSchema>;
+
+export async function loginAction(values: LoginInput) {
+  const validated = loginSchema.safeParse(values);
+  if (!validated.success) {
+    return { error: "Input tidak valid." };
+  }
+
   const supabase = await createSupabaseServerClient();
-
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-
   const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
+    email: values.email,
+    password: values.password,
   });
 
   if (error) {
-    return redirect("/login?message=Gagal login: Email atau password salah");
+    return { error: error.message }; 
   }
 
   revalidatePath("/", "layout");
   redirect("/dashboard");
 }
 
-export async function signup(formData: FormData) {
-  const supabase = await createSupabaseServerClient();
+export async function registerAction(values: RegisterInput) {
+  const validated = registerSchema.safeParse(values);
+  if (!validated.success) {
+    return { error: "Input tidak valid." };
+  }
 
-  const email = formData.get("email") as string;
-  const password = formData.get("password") as string;
-  
-  const origin = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const supabase = await createSupabaseServerClient();
+  const origin = process.env.NEXT_PUBLIC_APP_URL;
 
   const { error } = await supabase.auth.signUp({
-    email,
-    password,
+    email: values.email,
+    password: values.password,
     options: {
       emailRedirectTo: `${origin}/auth/callback`,
+      data: {
+        full_name: values.fullName,
+      },
     },
   });
 
   if (error) {
-    return redirect("/login?message=Gagal daftar: " + error.message);
+    return { error: error.message };
   }
 
-  return redirect("/login?message=Cek email kamu untuk konfirmasi pendaftaran!");
+  return { success: true };
 }
 
 export async function signOut() {
-  const supabase = await createSupabaseServerClient();
-  await supabase.auth.signOut();
-  redirect("/login");
+  const supabase = await createSupabaseServerClient()
+  await supabase.auth.signOut()
+  redirect("/login")
 }
