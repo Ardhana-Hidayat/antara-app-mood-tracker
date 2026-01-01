@@ -1,53 +1,163 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+"use client";
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp } from "lucide-react";
+import { Sparkles } from "lucide-react";
+
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ChartOptions,
+  ChartData
+} from "chart.js";
+import { Bar } from "react-chartjs-2";
+// 1. Import Plugin
+import ChartDataLabels from "chartjs-plugin-datalabels";
+
+// 2. Registrasi Plugin
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ChartDataLabels // Masukkan plugin di sini
+);
 
 export default function InsightPage() {
-  return (
-    <div className="min-h-screen bg-slate-50 pb-24">
+  const labels = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
+  
+  const chartData: ChartData<"bar"> = {
+    labels,
+    datasets: [
+      {
+        label: "Mood",
+        data: [40, 30, 60, 20, 80, 90, 85],
+        backgroundColor: "#6155F5",
+        hoverBackgroundColor: "#4e44c4",
+        borderRadius: 8,
+        barThickness: 32, // Sedikit dipertebal agar angka muat
+      },
+    ],
+  };
 
-      <main className="p-4 space-y-4 max-w-2xl mx-auto">
-        <Card className="bg-indigo-50 border-indigo-100">
-          <CardHeader>
-            <CardTitle className="text-primary text-sm font-bold uppercase tracking-wide">Ringkasan Mood</CardTitle>
+  const options: ChartOptions<"bar"> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    layout: {
+      padding: {
+        top: 25, // Memberi ruang di atas agar angka tidak terpotong
+      }
+    },
+    // 3. Konfigurasi Animasi Bawaan (Built-in)
+    animation: {
+      duration: 2000, // Durasi 2 detik (lebih lambat & smooth)
+      easing: "easeOutQuart", // Efek melambat di akhir
+    },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        enabled: true, // Tooltip tetap aktif jika user mau detail
+        backgroundColor: "#030029",
+        padding: 12,
+        cornerRadius: 8,
+        displayColors: false,
+        callbacks: {
+            label: (c) => `Mood: ${c.raw}%`
+        }
+      },
+      // 4. Konfigurasi Label Persentase
+      datalabels: {
+        display: true,
+        color: "#64748b", // Warna text (muted-foreground)
+        anchor: "end", // Posisi jangkar di ujung batang
+        align: "top", // Posisi teks di atas jangkar
+        offset: 4, // Jarak dari batang
+        formatter: (value) => `${value}%`, // Format teks
+        font: {
+          family: "var(--font-jakarta)", // Sesuaikan font aplikasi
+          size: 11,
+          weight: "bold",
+        },
+      },
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: {
+          font: { family: "var(--font-jakarta)" },
+          color: "#64748b",
+        },
+        border: { display: false },
+      },
+      y: {
+        display: false, // Sembunyikan sumbu Y
+        min: 0,
+        suggestedMax: 110, 
+      },
+    },
+  };
+
+  return (
+    <div className="min-h-screen bg-background pb-24 font-sans text-foreground">
+      <main className="p-4 pt-6 space-y-6 max-w-2xl mx-auto">
+        
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Sparkles className="w-6 h-6 text-primary" fill="currentColor" fillOpacity={0.2} />
+            AI Insight
+          </h2>
+          <p className="text-muted-foreground text-sm">Analisis mingguan (13 - 19 Nov)</p>
+        </div>
+
+        <Card className="border-none shadow-sm bg-primary/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-primary text-xs font-bold uppercase tracking-wider">
+              ✨ Rangkuman
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-slate-700 italic">
-              Minggu ini kamu cenderung merasa positif, terutama di akhir pekan. Kamu sering menyebut tentang pekerjaan saat merasa stres di hari Selasa dan Rabu.
+            <p className="text-sm leading-relaxed italic text-foreground/80">
+              Minggu ini kamu cenderung merasa <span className="font-semibold text-primary">positif</span>. Grafik menunjukkan peningkatan mood yang signifikan saat memasuki akhir pekan.
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Grafik Emosi</CardTitle>
-            <TrendingUp className="text-muted-foreground w-4 h-4" />
+        <Card className="border-none shadow-sm bg-card">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">Grafik Emosi</CardTitle>
+            <CardDescription>Tren mood 7 hari terakhir</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-32 flex items-end justify-between gap-2 px-2">
-                {[40, 30, 60, 20, 80, 90, 85].map((h, i) => (
-                    <div key={i} className="w-full bg-indigo-200 hover:bg-primary rounded-t-sm transition-all relative group" style={{ height: `${h}%` }}>
-                       <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs opacity-0 group-hover:opacity-100 transition">{h}%</div>
-                    </div>
-                ))}
-            </div>
-            <div className="flex justify-between mt-2 text-xs text-muted-foreground px-1">
-                <span>S</span><span>S</span><span>R</span><span>K</span><span>J</span><span>S</span><span>M</span>
+            <div className="h-55 w-full mt-2">
+              <Bar options={options} data={chartData} />
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-none shadow-sm bg-card">
           <CardHeader>
-            <CardTitle className="text-base">Topik Sering Muncul</CardTitle>
+            <CardTitle className="text-base font-semibold">Topik Terbanyak</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            <Badge className="bg-primary/10 text-primary hover:bg-primary/20">#Pekerjaan (5)</Badge>
-            <Badge variant="outline">#Keluarga (3)</Badge>
-            <Badge variant="outline">#Olahraga (2)</Badge>
-            <Badge variant="outline">#Kopi (2)</Badge>
+            <Badge className="bg-primary/10 text-primary hover:bg-primary/20 shadow-none border-none">#Pekerjaan</Badge>
+            <Badge variant="outline" className="border-muted text-muted-foreground">#Keluarga</Badge>
+            <Badge variant="outline" className="border-muted text-muted-foreground">#Hobi</Badge>
           </CardContent>
         </Card>
+
       </main>
     </div>
   );

@@ -1,10 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation";
+import { JournalCard } from "@/components/JournalCard";
+import { fetchJournals } from "@/lib/actions/journal";
+import { BookX } from "lucide-react";
 
 export default async function DashboardPage() {
-
   const supabase = await createSupabaseServerClient()
 
   const {
@@ -13,36 +13,35 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/login")
 
-  const journals = [
-    { id: 1, date: "Hari Ini, 10:30", mood: "😁", title: "Hari yang produktif!", preview: "Akhirnya selesai mengerjakan proyek besar...", tags: ["Kerja"] },
-    { id: 2, date: "Kemarin", mood: "😟", title: "Agak lelah", preview: "Seharian cuma di kasur karena flu berat...", tags: ["Kesehatan"] },
-    { id: 3, date: "17 Nov", mood: "🙂", title: "Makan malam enak", preview: "Pergi ke restoran baru sama teman-teman...", tags: ["Sosial"] },
-  ];
+  const journals = await fetchJournals()
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
+    <div className="min-h-screen bg-background pb-24">
       <main className="p-4 space-y-4 max-w-2xl mx-auto">
-        {journals.map((j) => (
-          <Card key={j.id} className="cursor-pointer hover:shadow-md transition border-l-4 border-l-primary">
-            <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl bg-slate-100 p-2 rounded-full">{j.mood}</span>
-                <div>
-                  <CardTitle className="text-base">{j.title}</CardTitle>
-                  <span className="text-xs text-muted-foreground">{j.date}</span>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-slate-600 line-clamp-2">{j.preview}</p>
-              <div className="mt-3 flex gap-2">
-                {j.tags.map(tag => (
-                  <Badge key={tag} variant="secondary" className="text-xs font-normal">{tag}</Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+
+        {journals.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-muted-foreground/20 rounded-2xl bg-card/50">
+            <div className="bg-primary/10 p-4 rounded-full mb-4">
+              <BookX className="w-8 h-8 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground">Belum ada catatan</h3>
+            <p className="text-muted-foreground max-w-xs mb-6 text-sm">
+              Yuk, mulai tulis apa yang kamu rasakan!
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {journals.map((j) => (
+              <JournalCard
+                key={j.id}
+                mood={j.mood}
+                title={j.title}
+                content={j.content}
+                date={j.date}
+              />
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
